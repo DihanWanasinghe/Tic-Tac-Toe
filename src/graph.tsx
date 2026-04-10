@@ -1,9 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+
+function calculateWinner(squares: string[]) {
+    const arrs = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+    ];
+    for (let i = 0; i < arrs.length; i++) {
+        const [a, b, c] = arrs[i];
+        if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+            return squares[a];
+        }
+    }
+    return null;
+}
 
 function Graph() {
 
     type playerType = "X" | "O"
-    type winner = playerType | null
 
     interface moveDetails {
         player: playerType | null;
@@ -11,83 +25,35 @@ function Graph() {
         squareNumber: number;
     }
 
-    type gameOngoing = boolean
-    type boardDisabled = boolean
-
     const [player, setPlayer] = useState<playerType>("X");
     const [moves, setMoves] = useState<moveDetails[]>([]);
-    const [winner, setWinner] = useState<winner>(null);
-    const [gameOngoing, setGameOngoing] = useState<gameOngoing>(true);
-    const [boardDisabled, setBoardDisabled] = useState<boardDisabled>(false);
     const [buttonInfo, setButtonInfo] = useState<string[]>(Array(9).fill(""))
 
-    const arrs = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6]
-    ];
-
-
-
-    useEffect(() => {
-        if (moves.length > 4) {
-            const player: playerType = moves[moves.length - 1].player;
-            const squares: number[] = moves.map((move) => {
-                if (move.player === player) {
-                    return move.squareNumber;
-                }
-            }
-            );
-
-            const exists = arrs.some(inner =>
-                inner.every(num => squares.includes(num))
-            );
-
-            if (exists) {
-                setWinner(player);
-                setGameOngoing(false);
-                setBoardDisabled(true);
-            } else if (!exists && moves.length == 9) {
-                setWinner(null);
-                setGameOngoing(false);
-                setBoardDisabled(true);
-            } else if (!exists && boardDisabled === true) {
-                setWinner(null);
-                setGameOngoing(true);
-                setBoardDisabled(false);
-            }
-        } else if (moves.length <= 4 && boardDisabled == true) {
-            setWinner(null);
-            setGameOngoing(true);
-            setBoardDisabled(false);
-        }
-    }, [moves]);
+    const winner = calculateWinner(buttonInfo);
 
     const squareClicked = useCallback((squareNumber: number) => {
-        if (boardDisabled) {
+        if (winner || buttonInfo[squareNumber] !== "") {
             return;
         }
+        
         setMoves([...moves, { player, moveNumber: moves.length + 1, squareNumber }]);
         setPlayer(player === "X" ? "O" : "X");
+
         setButtonInfo(buttonInfo.map((value, index) => {
             if (index === squareNumber) {
                 return player;
             }
             return value;
         }));
-    }, [boardDisabled, player, buttonInfo, moves]);
+
+    }, [player, buttonInfo, moves, winner]);
 
     const buttons = buttonInfo.map((value, index) => (
         <button
             key={index}
             onClick={() => squareClicked(index)}
             className="w-24 h-24 border border-gray-300 text-2xl font-bold text-center"
-            disabled={boardDisabled}
+            disabled={winner ? true : false}
         >
             {value}
         </button>
@@ -106,21 +72,13 @@ function Graph() {
 
         const slicedMoves = moves.slice(0, moveNumber + 1);
         setMoves(slicedMoves);
-        // ...and replay every move that happened onto the empty board!
+        
         slicedMoves.forEach((move) => {
             rebuiltBoard[move.squareNumber] = move.player;
         });
 
-        // Set the state to the perfectly rebuilt board
         setButtonInfo(rebuiltBoard);
-
-
-
     }
-
-
-
-
 
     return (
         <>

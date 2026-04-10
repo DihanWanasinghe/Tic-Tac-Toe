@@ -94,7 +94,7 @@ function Graph() {
     ));
 
     const clickHistory = (moveNumber: number) => {
-        if(moveNumber === -1){
+        if (moveNumber === -1) {
             setPlayer("X");
             setMoves([]);
             setButtonInfo(Array(9).fill(""));
@@ -102,16 +102,19 @@ function Graph() {
         }
 
         setPlayer(moves[moveNumber].player === "X" ? "O" : "X");
-        setMoves(moves.slice(0, moveNumber+1));
-        setButtonInfo(buttonInfo.map((_, index) => {
-            if (index <= moves[moveNumber].squareNumber){
-                return moves[index].player;
-            }
-            
-            return "";
-        }));
-      
-    
+        const rebuiltBoard = Array(9).fill("");
+
+        const slicedMoves = moves.slice(0, moveNumber + 1);
+        setMoves(slicedMoves);
+        // ...and replay every move that happened onto the empty board!
+        slicedMoves.forEach((move) => {
+            rebuiltBoard[move.squareNumber] = move.player;
+        });
+
+        // Set the state to the perfectly rebuilt board
+        setButtonInfo(rebuiltBoard);
+
+
 
     }
 
